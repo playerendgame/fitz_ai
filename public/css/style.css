@@ -1,0 +1,21 @@
+body{
+    background-image: url('../bg.jpg');
+    width: 100%;
+    height: auto;
+    background-repeat: no-repeat;
+}
+
+.main_login_container{
+    padding-top: 10rem;
+    padding-left: 5rem;
+     padding-right: 5rem;
+}
+
+.login_container{
+    border-radius: 1rem;
+    border-style: solid;
+    border-color: rgb(190, 190, 190);
+    backdrop-filter: blur(50px);
+    border-width: 2px;
+    padding-bottom: 10rem;
+}
