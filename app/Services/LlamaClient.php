@@ -28,7 +28,7 @@ class LlamaClient
     {
         try {
             $specificQuestions = [
-                'who made you' => $auth ? $auth->name : 'Unknown',
+                'who made you' => $auth ? $auth->name : 'Un',
                 'who created you' => 'Clyde Timothy R. Sumabat',
                 'Who is your creator' => 'Clyde Timothy R. Sumabat'
             ];

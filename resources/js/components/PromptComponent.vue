@@ -8,16 +8,16 @@
                     </div> -->
                     <div class="form-group d-flex pb-3">
                       <textarea class="form-control" v-model="prompt"></textarea><br>
-                      <button class="btn btn-outline-light" style="margin-left: 1rem;">
+                      <button class="btn btn-outline-light" style="margin-left: 1rem;" @click="startListening">
                         <span>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-mic-fill" viewBox="0 0 16 16">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-mic-fill" viewBox="0 0 16 16">
                             <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z"/>
                             <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5"/>
                           </svg>
                         </span>
-                      </button>  
+                      </button>
                     </div>
-                    <button class="btn btn-outline-light" @click="predict">Talk</button>
+                    <!-- <button class="btn btn-outline-light" @click="predict">Talk</button> -->
 
                 </div>
                 <div class="col-lg-6">
@@ -31,14 +31,17 @@
     </div>
 </template>
 <script>
-import WaveSurfer from 'wavesurfer.js';
-
 export default {
   data(){
     return{
       prompt: '',
       response: '',
-      phase: 0
+      phase: 0,
+      recognition: null,
+      isListening: false,
+      cache: {},
+      cacheMaxSize: 100,
+      cacheTTL: 300000
     }
   },
   methods: {
@@ -59,6 +62,37 @@ export default {
       }
       ctx.stroke();
       this.phase += 10;
+    },
+    startListening(){
+      if(!this.isListening){
+        this.isListening = true;
+        this.recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+        this.recognition.lang = 'en-US';
+        this.recognition.maxResults = 10;
+        this.recognition.onresult = this.onResult;
+        this.recognition.onerror = this.onError;
+        this.recognition.onend = this.onEnd;
+        this.recognition.start();
+      }else {
+        this.recognition.stop();
+        this.isListening = false;
+      }
+    },  
+    onResult(event){
+      let transcript = '';
+      for(let i = event.resultIndex; i < event.results.length; ++i){
+        transcript += event.results[i][0].transcript;
+      }
+      this.prompt = transcript;
+      setTimeout(() => {//auto send after talking or voice recognition
+        this.predict();
+      }, 500);
+    },
+    onError(event){
+      console.log('Error occured in SpeechRecognition: ' + event.error);
+    },
+    onEnd(){
+      this.isListening = false;
     },
     predict(){
       axios.post('/predict', { prompt: this.prompt})
