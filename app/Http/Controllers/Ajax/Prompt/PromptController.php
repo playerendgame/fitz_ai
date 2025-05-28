@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\Ajax\Prompt;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\LlamaClient;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class PromptController extends Controller
 {
     public function predict(Request $request){
         $prompt = $request->input('prompt');
+        $auth = Auth::guard('users')->user();
         $llamaClient = new LlamaClient();
-        $audioContent = $llamaClient->predict($prompt);
+        $response = $llamaClient->predict($prompt, $auth);
 
-        $response = response()->make($audioContent, 200);
-        $response->header('Content-Type', 'audio/mpeg');
-
-        return $response;
+        return response()->json(['response' => $response]);
     }
 }
