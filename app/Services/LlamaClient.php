@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\Models\Conversation;
+use App\Models\ConversationMessage;
 use Illuminate\Support\Facades\Log;
-use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
+use Illuminate\Support\Facades\Http;
 use Google\Cloud\TextToSpeech\V1\AudioConfig;
 use Google\Cloud\TextToSpeech\V1\AudioEncoding;
 use Google\Cloud\TextToSpeech\V1\SynthesisInput;
-use Google\Cloud\TextToSpeech\V1\SynthesizeSpeechResponse;
+use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
 use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
+use Google\Cloud\TextToSpeech\V1\SynthesizeSpeechResponse;
 
 
 class LlamaClient
@@ -27,32 +29,61 @@ class LlamaClient
      public function predict($prompt, $auth)
     {
         try {
-            $specificQuestions = [
-                'who made you' => $auth ? $auth->name : 'Un',
-                'who created you' => 'Clyde Timothy R. Sumabat',
-                'Who is your creator' => 'Clyde Timothy R. Sumabat'
-            ];
+            //Triggers the function getConversationHistory
+            $conversationHistory = $this->getConversationHistory($auth);
 
-            $lowerCasePrompt = strtolower($prompt);
-            foreach ($specificQuestions as $question => $answer) {
-                if (strpos($lowerCasePrompt, $question) !== false) {
-                    return $answer;
+            //If conversationHistory is empty, it will just a new conversation
+            if (empty($conversationHistory)) {
+                $conversation = Conversation::create(['user_id' => $auth->id]);
+                $conversationHistory = [];
+            } else {
+                $conversation = Conversation::where('user_id', $auth->id)->first();
+            }
+
+            $messages = [];
+            foreach ($conversationHistory as $message) {
+                if ($message->is_ai_response) {
+                    $messages[] = ['role' => 'assistant', 'content' => $message->message];
+                } else {
+                    $messages[] = ['role' => 'user', 'content' => $message->message];
                 }
             }
+
+            $messages[] = ['role' => 'user', 'content' => $prompt];
 
             $response = Http::withToken($this->apiKey)
                 ->post($this->apiUrl, [
                     'model' => 'llama-3.1-8b-instant',
-                    'messages' => [
-                        ['role' => 'user', 'content' => $prompt],
-                    ],
+                    'messages' => $messages,
                     'max_tokens' => 2048,
                     'temperature' => 0.7,
                 ]);
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                return $responseData['choices'][0]['message']['content'];
+                $aiResponse = $responseData['choices'][0]['message']['content'];
+                
+                $conversation = Conversation::where('user_id', $auth->id)->first();
+                if(!$conversation){
+                    $conversation = Conversation::create(['user_id' => $auth->id]);
+                }
+
+                ConversationMessage::create([
+                    'conversation_id' => $conversation->id,
+                    'message' => $prompt,
+                    'is_ai_response' => false,
+                ]);
+
+                ConversationMessage::create([
+                      'conversation_id' => $conversation->id,
+                      'message' => $aiResponse,
+                      'is_ai_response' => true,
+                
+                ]);
+
+                return $aiResponse;
+                
+            
             } else {
                 Log::error("Groq API failed: " . $response->body());
                 throw new \Exception("Failed to fetch response");
@@ -61,6 +92,20 @@ class LlamaClient
             Log::error("Error in predict(): " . $e->getMessage());
             throw new \Exception("Failed to generate response");
         }
+    }
+
+    public function getConversationHistory($auth)
+    {
+        $conversation = Conversation::where('user_id', $auth->id)->first();
+        if (!$conversation) {
+            return [];
+        }
+
+        $conversationMessages = ConversationMessage::where('conversation_id', $conversation->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return $conversationMessages;
     }
 
     //Eleven Labs code API integration
@@ -148,9 +193,6 @@ class LlamaClient
     //         Log::error("Error making API request: " . $e->getMessage());
     //         throw new \Exception("Error making API request: " . $e->getMessage());
     //     }
-    // }
-
-    //Prompt text to text
-    
+    // }    
     
 }

@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="container text-center">
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-lg-6 pb-3">
                     <!-- <div class="buttons text-center">
                         <button class="btn btn-outline-light" @click="theAudioWave">Speak</button>
@@ -17,12 +17,17 @@
                         </span>
                       </button>
                     </div>
-                    <!-- <button class="btn btn-outline-light" @click="predict">Talk</button> -->
+                    <button class="btn btn-outline-light" @click="predict">Talk</button>
 
                 </div>
                 <div class="col-lg-6">
                     <div class="border text-light rounded-4">
                         <canvas id="waveform" width="500" height="300"></canvas>
+                    </div>
+                    <div class="border">
+                      <span class="text-light">
+                        {{ response }}
+                      </span>
                     </div>
                 </div>
             </div>
@@ -101,9 +106,9 @@ export default {
         this.prompt = '';
 
         if(window.responsiveVoice){
-          window.responsiveVoice.speak(this.response, 'Filipino Female', {
-            rate: 1.1,
-            pitch: 1.1,
+          window.responsiveVoice.speak(this.response, 'UK English Female', {
+            rate: 1.0,
+            pitch: 1.3,
             onstart: () => {
               this.intervalId = setInterval(() => {
                 this.soundWave();
