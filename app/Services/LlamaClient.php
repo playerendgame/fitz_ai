@@ -21,8 +21,10 @@ class LlamaClient
 
     public function __construct()
     {
-        $this->apiKey = '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';
+        $this->apiKey = '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';
         $this->apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+        // $this->apiUrl = 'http://localhost:11434/';
     
     }
 
@@ -53,11 +55,16 @@ class LlamaClient
 
             $response = Http::withToken($this->apiKey)
                 ->post($this->apiUrl, [
-                    'model' => 'llama-3.1-8b-instant',
+                    'model' => 'llama-3.3-70b-versatile',
                     'messages' => $messages,
                     'max_tokens' => 2048,
                     'temperature' => 0.7,
                 ]);
+
+            //   $response = Http::post($this->apiUrl, [
+            //         'model' => 'codeqwen:latest',
+            //         'messages' => $messages,
+            //     ]);
 
             if ($response->successful()) {
                 $responseData = $response->json();
