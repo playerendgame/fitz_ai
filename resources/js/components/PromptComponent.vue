@@ -106,9 +106,9 @@ export default {
         this.prompt = '';
 
         if(window.responsiveVoice){
-          window.responsiveVoice.speak(this.response, 'UK English Female', {
-            rate: 1.0,
-            pitch: 1.3,
+          window.responsiveVoice.speak(this.response, 'UK English Male', {
+            rate: 1.3,
+            pitch: 0.7,
             onstart: () => {
               this.intervalId = setInterval(() => {
                 this.soundWave();
