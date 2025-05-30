@@ -25,17 +25,17 @@ class LlamaClient
         $this->localUrl = 'http://localhost:11434/v1/chat/completions';
     }
 
-    public function predict($prompt, $auth)
+    public function generate($prompt, $auth)
     {
         try {
         
-            // Fetch conversation history
+            //Fetch conversation history
             $conversationHistory = $this->getConversationHistory($auth);
 
-            // Create conversation if none exists
+            //Create conversation if none exists
             $conversation = Conversation::firstOrCreate(['user_id' => $auth->id]);
 
-            // Fetch memories for this user and prepare system message
+            //Fetch memories for this user and prepare system message
             $memories = Memory::where('user_id', $auth->id)->get();
             $memoryText = "";
 
@@ -46,7 +46,7 @@ class LlamaClient
                 }
             }
 
-            // Prepare messages array including memories as system message
+            //Prepare messages array including memories as system message
             $messages = [];
 
             if (!empty($memoryText)) {
@@ -56,7 +56,7 @@ class LlamaClient
                 ];
             }
 
-            // Add conversation history to messages
+            //Add conversation history to messages
             foreach ($conversationHistory as $message) {
                 $messages[] = [
                     'role' => $message->is_ai_response ? 'assistant' : 'user',
@@ -64,10 +64,10 @@ class LlamaClient
                 ];
             }
 
-            // Add current prompt as user message
+            //Add current prompt as user message
             $messages[] = ['role' => 'user', 'content' => $prompt];
 
-            // Call AI API
+            //Call AI API
             $response = Http::post($this->localUrl, [
                 'model' => 'llama3.2:latest',
                 'messages' => $messages,
@@ -80,7 +80,7 @@ class LlamaClient
                 $aiResponse = $responseData['choices'][0]['message']['content'];
 
 
-                // Save messages in conversation
+                //Save messages in conversation
                 ConversationMessage::create([
                     'conversation_id' => $conversation->id,
                     'message' => $prompt,
@@ -93,7 +93,7 @@ class LlamaClient
                     'is_ai_response' => true,
                 ]);
 
-                // Check if user wants to save this to memories
+                //Check if user wants to save this to memories
                 if (preg_match('/remember this|save this|keep this/i', $prompt)) {
                     Memory::create([
                         'user_id' => $auth->id,

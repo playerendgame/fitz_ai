@@ -26,5 +26,5 @@ Route::namespace('App\Http\Controllers\Admin')->group(function() {
 Route::namespace('App\Http\Controllers\Ajax')->group(function() {
 
     Route::post('/prompt/login', 'Login\LoginController@login');
-    Route::post('/predict', 'Prompt\PromptController@predict');
+    Route::post('/generate', 'Prompt\PromptController@generate');
 }); 

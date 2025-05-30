@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Auth;
 
 class PromptController extends Controller
 {
-    public function predict(Request $request){
+    public function generate(Request $request){
         $prompt = $request->input('prompt');
         $auth = Auth::guard('users')->user();
         $llamaClient = new LlamaClient();
-        $response = $llamaClient->predict($prompt, $auth);
+        $response = $llamaClient->generate($prompt, $auth);
 
         return response()->json(['response' => $response]);
     }
