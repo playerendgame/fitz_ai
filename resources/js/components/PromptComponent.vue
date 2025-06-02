@@ -3,6 +3,22 @@
         <div class="container text-center">
             <div class="row align-items-center">
                 <div class="col-lg-12 pb-3">
+                    <div class="text-light rounded-4">
+                      <!--The Wave-->
+                        <div class="container_audio">
+                            <div class="circle sound-wave-opacity delay1"></div>
+                            <div class="circle sound-wave-opacity delay2"></div>
+                            <div class="circle sound-wave-opacity delay3"></div>
+                            <div class="circle sound-wave-opacity delay4"></div>
+                        </div>
+                    </div>
+                    <div>
+                      <span class="text-light">
+                        {{ response }}
+                      </span>
+                    </div>
+                </div>
+                <div class="col-lg-12 pb-3">
                     <!-- <div class="buttons text-center">
                         <button class="btn btn-outline-light" @click="theAudioWave">Speak</button>
                     </div> -->
@@ -19,22 +35,6 @@
                         </button>
                       </div>
                       <button class="btn btn-outline-light" @click="generate">Talk</button>
-                    </div>
-                </div>
-                <div class="col-lg-12">
-                    <div class="text-light rounded-4">
-                      <!--The Wave-->
-                        <div class="container_audio">
-                            <div class="circle delay1"></div>
-                            <div class="circle delay2"></div>
-                            <div class="circle delay3"></div>
-                            <div class="circle delay4"></div>
-                        </div>
-                    </div>
-                    <div>
-                      <span class="text-light">
-                        {{ response }}
-                      </span>
                     </div>
                 </div>
             </div>
@@ -96,18 +96,20 @@ export default {
     soundWave(){
       let circle = document.querySelectorAll('.circle');
       for (let i = 0; i < circle.length; i++){
-        circle[i].style.animation = 'waves 2.5s linear';
-        circle[i].style.animationDelay = (i * 0.7) + 's';
+        // circle[i].style.animation = 'waves 2.5s linear';
+        // circle[i].style.animationDelay = (i * 0.7) + 's';
+        circle[i].classList.add('sound-wave');
+        circle[i].classList.remove('sound-wave-opacity');
+        circle[i].classList.add('delay' + (i + 1));
       }
     },
     stopSoundWave(){
       let circle = document.querySelectorAll('.circle');
       for (let i = 0; i < circle.length; i++){
-        circle[i].style.animation = 'none';
+        circle[i].classList.remove('sound-wave');
+        circle[i].classList.add('sound-wave-opacity');
+        circle[i].classList.remove('delay1', 'delay2', 'delay3', 'delay4');
       }
-      setTimeout(() => {
-        this.soundWave();
-      }, 2000);
     },
     generate(){
       axios.post('/generate', { prompt: this.prompt})
@@ -120,12 +122,14 @@ export default {
             rate: 1.3,
             pitch: 1.2,
             onstart: () => {
+              this.soundWave();
               this.intervalId = setInterval(() => {
                 this.soundWave();
-              }, 20);
+              }, 2000);
             },
             onend: () => {
-               this.stopSoundWave();
+                clearInterval(this.intervalId);
+                this.stopSoundWave();
             }
           })
         }else{
@@ -143,7 +147,7 @@ export default {
         this.startListening();//calls the method startListening
       }else if(event.keyCode === 13){ //numerical code for Enter key
         this.generate();
-      }else if(event.keyCode === 18){
+      }else if(event.keyCode === 36){//numiercal key code for "home"
         if(this.isPromptControlsHidden == false){
             this.isPromptControlsHidden = true;
         }else{
