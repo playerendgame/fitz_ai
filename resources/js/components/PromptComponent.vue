@@ -1,24 +1,19 @@
 <template>
     <div>
         <div class="container text-center">
-            <div class="row align-items-center">
-                <div class="col-lg-12 pb-3">
+            <div class="row">
+                <div class="col-md-6 pb-3">
                     <div class="text-light rounded-4">
                       <!--The Wave-->
-                        <div class="container_audio">
+                        <div class="container_audio ">
                             <div class="circle sound-wave-opacity delay1"></div>
                             <div class="circle sound-wave-opacity delay2"></div>
                             <div class="circle sound-wave-opacity delay3"></div>
                             <div class="circle sound-wave-opacity delay4"></div>
                         </div>
                     </div>
-                    <div>
-                      <span class="text-light">
-                        {{ response }}
-                      </span>
-                    </div>
                 </div>
-                <div class="col-lg-12 pb-3">
+                <div class="col-md-6 pb-3">
                     <!-- <div class="buttons text-center">
                         <button class="btn btn-outline-light" @click="theAudioWave">Speak</button>
                     </div> -->
@@ -35,6 +30,12 @@
                         </button>
                       </div>
                       <button class="btn btn-outline-light" @click="generate">Talk</button>
+                    </div>
+
+                      <div>
+                      <span class="text-light">
+                        {{ response }}
+                      </span>
                     </div>
                 </div>
             </div>

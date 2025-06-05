@@ -17,15 +17,14 @@ body{
 
 .main_login_container{
     padding-top: 10rem;
-    padding-left: 5rem;
-     padding-right: 5rem;
+    width: 40%;
 }
 
 .login_container{
     border-radius: 1rem;
     border-style: solid;
     border-color: rgb(190, 190, 190);
-    backdrop-filter: blur(50px);
+    backdrop-filter: blur(15px);
     border-width: 2px;
     padding-bottom: 10rem;
 }
