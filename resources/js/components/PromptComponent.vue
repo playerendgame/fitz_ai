@@ -6,6 +6,16 @@
                     <div class="text-light rounded-4">
                       <!--The Wave-->
                         <div class="container_audio ">
+
+                            <div class="generatingContainerPrompt d-flex align-items-center" v-if="isGenerating">
+                              <div class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+                                  <span class="visually-hidden">Loading...</span>
+                              </div>
+                              <div class="spinner-text" style="margin-left: 1rem;">
+                                  <span class="display-6">Generating</span>
+                              </div>
+                            </div>
+
                             <div class="circle sound-wave-opacity delay1"></div>
                             <div class="circle sound-wave-opacity delay2"></div>
                             <div class="circle sound-wave-opacity delay3"></div>
@@ -32,7 +42,7 @@
                       <button class="btn btn-outline-light" @click="generate">Talk</button>
                     </div>
 
-                      <div>
+                      <div class="pt-4">
                       <span class="text-light">
                         {{ response }}
                       </span>
@@ -56,13 +66,32 @@ export default {
       cacheMaxSize: 100,
       cacheTTL: 300000,
 
-      isPromptControlsHidden: true
+      isGenerating: false,
+      isPromptControlsHidden: true,
+      selectedVoice: ''
     }
   },
   mounted(){  
     window.addEventListener('keydown', this.handleKeyDown);
+    this.getVoices();
+    this.selectedVoice = "Microsoft Ryan Online (Natural) - English (United Kingdom)";
   },  
   methods: {
+    getVoices() {
+      if (typeof window.speechSynthesis === 'undefined') {
+        console.log('Speech synthesis not supported');
+        return;
+      }
+      let voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        // If no voices are available, try again after a short delay
+        setTimeout(() => {
+          this.getVoices();
+        }, 100);
+      } else {
+        this.voices = voices;
+      }
+    },
     startListening(){
       if(!this.isListening){
         this.isListening = true;
@@ -84,9 +113,19 @@ export default {
         transcript += event.results[i][0].transcript;
       }
       this.prompt = transcript;
-      setTimeout(() => {//auto send after talking or voice recognition
-        this.generate();
-      }, 500);
+
+
+      if(transcript.toLowerCase().includes('stop talking')){
+        this.stopSoundWave();
+        window.speechSynthesis.cancel();
+        this.recognition.stop();
+        this.isListening = false;
+      }else{
+        setTimeout(() => {
+          this.generate();
+        }, 500);
+      }
+
     },
     onError(event){
       console.log('Error occured in SpeechRecognition: ' + event.error);
@@ -112,36 +151,44 @@ export default {
         circle[i].classList.remove('delay1', 'delay2', 'delay3', 'delay4');
       }
     },
-    generate(){
-      axios.post('/generate', { prompt: this.prompt})
-      .then(response => {
-        this.response = response.data.response;
-        this.prompt = '';
+    generate() {
+      this.isGenerating = true;
+      axios.post('/generate', { prompt: this.prompt })
+        .then(response => {
+          if (response.data.response) {
+            this.isGenerating = false;
+            this.response = response.data.response;
+            this.prompt = '';
 
-        if(window.responsiveVoice){
-          window.responsiveVoice.speak(this.response, 'UK English Male', {
-            rate: 1.3,
-            pitch: 1.2,
-            onstart: () => {
-              this.soundWave();
-              this.intervalId = setInterval(() => {
-                this.soundWave();
-              }, 2000);
-            },
-            onend: () => {
-                clearInterval(this.intervalId);
-                this.stopSoundWave();
+            if (window.speechSynthesis) {
+              //getting the selectedVoice from listed voices in getvoice method
+              const voice = this.voices.find(voice => voice.name === this.selectedVoice);
+
+              //if voice founds the voice name is true.......
+              if(voice){
+                const utterance = new SpeechSynthesisUtterance(this.response);
+                utterance.lang = voice.lang;
+                utterance.rate = 1.2;
+                utterance.pitch = 1.8;
+                utterance.voice = voice;
+
+                utterance.onerror = console.error;
+                utterance.onstart = () => {
+                  this.soundWave();
+                  console.log('Speech Started');
+                }
+                utterance.onend = () => {
+                  this.stopSoundWave();
+                  console.log('Speech Ended');
+                };
+
+                window.speechSynthesis.speak(utterance);
+              }
             }
-          })
-        }else{
-          console.warn('Responsive voice not loaded');
-        }
-      })
-      .catch(error => {
-        console.error(error);
-      })
+          }
+        })
+        .catch(console.error);
     },
-
     //Shortcut keys
     handleKeyDown(event) {
       if(event.ctrlKey){
